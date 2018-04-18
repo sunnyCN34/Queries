@@ -1,0 +1,32 @@
+Cross member query DB2 XP 
+
+SELECT mp.MEMBER_NBR, i.LAST_NAME, s.SHARE_NBR FROM MEMBERSHIPPARTICIPANT mp inner join INDIVIDUAL i on mp.INDIVIDUAL_ID = i.INDIVIDUAL_ID inner join SHARE s on mp.MEMBER_NBR = s.MEMBER_NBR
+
+Pending table = TUNA/QA.XP (sql Server)
+
+SELECT TOP (1000) [Id]
+      ,[RequestMemberNumber]
+      ,[RequestIndividualId]
+      ,[CrossMemberLastName]
+      ,[CrossMemberNumber]
+      ,[CrossMemberAccountNumber]
+      ,[CrossMemberStatus]
+      ,[TellerId]
+      ,[RequestDate]
+      ,[IsRecordAddedToXP]
+      ,[StatusUpdateDate]
+      ,[StatusUpdateUser]
+  FROM [XP].[dbo].[CROSS_MEMBER] 
+
+Email log
+
+SELECT TOP (1000) [Id]
+      ,[CrossMemberRecordId]
+      ,[IsEmailSent]
+      ,[EmailSentDate]
+  FROM [XP].[dbo].[CROSS_MEMBER_EMAIL_LOG]
+
+
+QA OCP job
+
+http://qa-ocp.dcunet.org/utilities/portal.aspx
