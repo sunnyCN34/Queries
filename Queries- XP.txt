@@ -2,9 +2,15 @@ SELECT INDIVIDUAL_ID FROM MEMBERSHIPPARTICIPANT WHERE MEMBER_NBR = 2351167
 
 SELECT * FROM INDIVIDUALPROPERTY WHERE INDIVIDUAL_ID = 46700 AND ITEM_NAME = 'OXHB_LastActivity_Date'
 
+
+// sample update for account
 update share  set REG_D_CNT = 0 where MEMBER_NBR = 999999142 and SHARE_NBR = 3
 
 
+
+
+
+// view the balance info
 select s1.balance, s1.SHARE_NBR, s1.REG_D_CNT, s1.REG_D_CHECK_CNT from
 share s1 where s1.member_nbr = 999999142
 order by s1.BALANCE DESC
