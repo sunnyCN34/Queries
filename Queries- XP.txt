@@ -7,7 +7,8 @@ SELECT * FROM INDIVIDUALPROPERTY WHERE INDIVIDUAL_ID = 46700 AND ITEM_NAME = 'OX
 update share  set REG_D_CNT = 0 where MEMBER_NBR = 999999142 and SHARE_NBR = 3
 
 
-
+//update acount info
+Update share s1 set s1.balance= 9000 where s1.member_nbr= 999999142 and s1.SHARE_NBR= 2
 
 
 // view the balance info
