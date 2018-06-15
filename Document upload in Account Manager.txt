@@ -1,0 +1,47 @@
+Tuna
+
+SELECT TOP (1000) [DOCUMENT_ID]
+      ,[USER_ID]
+      ,[FILE_PATH]
+      ,[FILE_NAME]
+      ,[UPLOAD_DATE]
+      ,[CATEGORY_ID]
+      ,[ACTIVE]
+      ,[ARCHIVED_TO_NAUTLIUS]
+      ,[NAUTILUS_FILE_PATH]
+      ,[NAUTILUS_ID]
+      ,[ORIGINAL_FILE_NAME]
+      ,[NICKNAME]
+      ,[RAW_DATA]
+      ,[USER_DELETED]
+      ,[COMMENT]
+      ,[NOTIFICATION_EMAIL]
+  FROM [DOCUMENT_DEPOSIT].[dbo].[DD_DOCUMENTS] order by DOCUMENT_ID desc
+
+
+Document name suffix
+SELECT TOP (1000) [id]
+      ,[name]
+      ,[output_path]
+      ,[display_order]
+      ,[file_mask]
+      ,[display]
+      ,[keyword_string]
+      ,[post_task_name]
+      ,[post_task_library]
+  FROM [DOCUMENT_DEPOSIT].[dbo].[DD_DESTINATIONS]
+
+Config items
+
+email
+SELECT TOP (1000) [id]
+      ,[ITEM_KEY]
+      ,[ITEM_VALUE]
+      ,[ITEM_TYPE]
+  FROM [ACCOUNT_MANAGER].[dbo].[CONFIG] where ITEM_VALUE like '%bill%'
+
+
+
+
+
+
