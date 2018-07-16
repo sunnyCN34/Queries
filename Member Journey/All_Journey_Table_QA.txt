@@ -1,0 +1,6 @@
+
+SELECT * FROM [MemberJourney].[dbo].[MemberPersonal] 
+SELECT * FROM [MemberJourney].[dbo].[MemberAccount] 
+SELECT * FROM [MemberJourney].[dbo].[MemberJourney] 
+SELECT * FROM [MemberJourney].[dbo].[TransactionRecord]
+
