@@ -1,0 +1,11 @@
+SELECT TOP (1) [DOC_ID]
+      ,[MDU_APP_ID]
+      ,[DOCUMENT_TYPE_ID]
+      ,[FILE_NAME]
+      ,[DESTINATION_FILE_NAME]
+      ,[DOC_CONTENT]
+      ,[CREATE_DATE]
+      ,[FILE_EXTENSION]
+      ,[OPERATOR_ID]
+  FROM [MORTGAGE_DOC_UPLOAD].[dbo].[MDU_DOCUMENT]
+  order by [CREATE_DATE] desc

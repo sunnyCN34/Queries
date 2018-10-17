@@ -1,0 +1,415 @@
+-- get matrix of account permissions
+                                    WITH ownershipMatrix as
+                                    (
+                                        SELECT
+                                                orm.ownership_category_id, oar.admin_right_id, oar.admin_right_desc, oc.ownership_category_desc
+
+                                        FROM
+
+                                                ownershiprightsmatrix orm inner join ownershipadminrights oar on (orm.admin_right_id = oar.admin_right_id and oar.admin_right_id in (1 /*All*/, 3 /*Deposit*/, 4 /*Payment*/, 5 /*Withdrawal*/, 6 /*Advance*/, 7 /*Transfer*/, 8 /*Inquiry*/) )
+                                                inner join ownershipcategory oc on (orm.ownership_category_id = oc.ownership_category_id)
+                                                inner join ownershipchannel och on (orm.ownership_channel_id = och.ownership_channel_id and och.ownership_channel_id = 2 /*home banking*/)
+
+                                        order by
+                                                oc.ownership_category_id
+                                    )
+                                    , allAccounts as
+                                    (
+
+                                        -- membership-based shares
+                                        SELECT
+                                                mp.individual_id, mp.member_nbr, s.share_nbr as account_nbr, omx.ownership_category_id,
+                                                1 /* share */ as ACCOUNT_CLASS,
+
+                                                case when admin_right_id in (1)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_ALL,
+
+                                                case when admin_right_id in (3,4)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_DEP,
+
+                                                case when admin_right_id in (5,6,7)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_WD
+
+                                        FROM
+                                                membershipparticipant mp join ownershipMatrix omx ON (mp.participation_type=omx.ownership_category_id)
+                                                join share s on (mp.member_nbr=s.member_nbr)
+                                        WHERE
+                                                mp.individual_id = 372195
+
+                                        UNION
+
+                                        -- membership-based loans
+                                        SELECT
+                                                mp.individual_id, mp.member_nbr, l.loan_nbr as account_nbr, omx.ownership_category_id,
+                                                2 /* loan */ as ACCOUNT_CLASS,
+
+                                                case when admin_right_id in (1)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_ALL,
+
+                                                case when admin_right_id in (3,4)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_DEP,
+
+                                                case when admin_right_id in (5,6,7)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_WD
+
+                                        FROM
+                                                membershipparticipant mp join ownershipMatrix omx ON (mp.participation_type=omx.ownership_category_id)
+                                                join loan l on (mp.member_nbr=l.member_nbr and coalesce(l.is_written_off,0) = 0)
+                                        WHERE
+                                                mp.individual_id = 372195
+
+                                        UNION
+
+
+                                        -- account-based shares
+                                        SELECT
+                                                ai.individual_id, ai.member_nbr, ai.account_nbr, omx.ownership_category_id,
+                                                1 /* share */ as ACCOUNT_CLASS,
+
+                                                case when admin_right_id in (1)
+                                                        then 1
+                                                       else 0
+                                                end as HAS_ACCESS_ALL,
+
+                                                case when admin_right_id in (3,4)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_DEP,
+
+                                                case when admin_right_id in (5,6,7)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_WD
+
+                                        FROM
+                                                accountindividual ai join ownershipMatrix omx ON (ai.participation_type=omx.ownership_category_id)
+                                                join share s on (ai.member_nbr=s.member_nbr and ai.account_nbr=s.share_nbr)
+
+                                        WHERE
+                                                ai.individual_id = 372195
+
+
+                                        UNION
+
+                                        -- account-based loans
+                                        SELECT
+                                                ai.individual_id, ai.member_nbr, ai.account_nbr, omx.ownership_category_id,
+                                                2 /* loan */ as ACCOUNT_CLASS,
+
+                                                case when admin_right_id in (1)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_ALL,
+
+                                                case when admin_right_id in (3,4)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_DEP,
+
+                                                case when admin_right_id in (5,6,7)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_WD
+
+                                        FROM
+                                                accountindividual ai join ownershipMatrix omx ON (ai.participation_type=omx.ownership_category_id)
+                                                join loan l on (ai.member_nbr=l.member_nbr and ai.account_nbr=l.loan_nbr and coalesce(l.is_written_off,0) = 0)
+
+                                        WHERE
+                                                ai.individual_id = 372195
+
+                                        UNION
+
+                                        -- primary mortgages
+                                        SELECT
+                                                mp.individual_id, mc.MC_BORROWER_1_MBR_NBR, mc.xp_loan_nbr as account_nbr, omx.ownership_category_id,
+                                                3 /* mortgage */ as ACCOUNT_CLASS,
+
+                                                1 as HAS_ACCESS_ALL,
+                                                1 as HAS_ACCESS_DEP,
+                                                1 as HAS_ACCESS_WD
+
+                                        FROM
+
+                                                EXTERNALMORTGAGEMC mc JOIN membershipservice ms ON (CAST(ms.SERVICE_ADDL_INFO AS BIGINT) = mc.MC_LOAN_NBR)
+                                                join membershipparticipant mp ON (ms.member_nbr=mp.member_nbr)
+                                                join ownershipMatrix omx ON (mp.participation_type=omx.ownership_category_id)
+                                        WHERE
+                                                mp.individual_id = 372195
+                                                and COALESCE(mc.STUDENT, 0) = 0
+
+
+                                        UNION
+
+                                        --AccountIndividual-based mortgages
+                                        SELECT
+                                                ai.individual_id, ai.member_nbr, SMALLINT(MPS.SERVICE_OCCR_NBR) as ACCOUNT_NBR,
+                                                omx.ownership_category_id as OWNERSHIP_CATEGORY_ID,
+                                                3 /* mortgage */ as ACCOUNT_CLASS,
+
+                                                case when admin_right_id in (1)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_ALL,
+
+                                                case when admin_right_id in (3,4)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_DEP,
+
+                                                case when admin_right_id in (5,6,7)
+                                                        then 1
+                                                        else 0
+                                                end as HAS_ACCESS_WD
+
+                                        FROM
+                                                individual i join accountindividual ai on (i.individual_id = ai.individual_id)
+                                                join membershipservice mps on (mps.member_nbr = ai.member_nbr)
+                                                join externalmortgagemc exmg on (cast(mps.service_addl_info as bigint ) = exmg.mc_loan_nbr and exmg.xp_loan_nbr = ai.account_nbr and exmg.mc_borrower_1_mbr_nbr = ai.member_nbr)
+                                                join ownershipMatrix omx ON (ai.participation_type=omx.ownership_category_id)
+
+                                        where
+                                                ai.individual_id = 372195
+                                                and COALESCE(exmg.STUDENT, 0) = 0
+
+
+                                        UNION
+
+                                        -- ExternalAccess-based mortgages
+                                        SELECT
+                                            ia.individual_id, ia.member_nbr, SMALLINT(MPS.SERVICE_OCCR_NBR) as ACCOUNT_NBR,
+                                            case when coalesce(ia.ALLOW_EXT_DEP,0) != 0 and coalesce(ia.ALLOW_EXT_WDL,0) != 0 then 3 else 999 end as OWNERSHIP_CATEGORY_ID,
+                                            3 /* mortgage */ as ACCOUNT_CLASS,
+
+                                            case when abs(coalesce(ia.allow_ext_dep,0)) !=0 and abs(coalesce(ia.allow_ext_wdl,0)) != 0 then 1 else 0 end as HAS_ACCESS_ALL,
+                                            abs(ia.allow_ext_dep) as HAS_ACCESS_DEP,
+                                            abs(ia.allow_ext_wdl) as HAS_ACCESS_WD
+
+                                        FROM
+                                            individualaccount ia join MEMBERSHIPSERVICE MPS ON (MPS.MEMBER_NBR = ia.member_nbr and SMALLINT(MPS.SERVICE_OCCR_NBR) = ia.account_nbr)
+                                            join EXTERNALMORTGAGEMC EXMG ON (CAST(MPS.SERVICE_ADDL_INFO AS BIGINT) = EXMG.MC_LOAN_NBR)
+
+                                        WHERE
+                                            ia.individual_id = 372195
+                                            and COALESCE(EXMG.STUDENT, 0) = 0
+
+
+
+                                        UNION
+
+                                        -- ExternalAccess-based shares
+                                        SELECT
+                                                ia.individual_id, ia.member_nbr, ia.account_nbr,
+
+                                                case when coalesce(ia.ALLOW_EXT_DEP,0) != 0 and coalesce(ia.ALLOW_EXT_WDL,0) != 0 then 2 else 999 end as OWNERSHIP_CATEGORY_ID,
+                                                1 /* share */ as ACCOUNT_CLASS,
+
+                                                case when coalesce(ia.ALLOW_EXT_DEP,0) != 0 and coalesce(ia.ALLOW_EXT_WDL,0) != 0 then 1 else 0 end as HAS_ACCESS_ALL,
+                                                abs(ia.ALLOW_EXT_DEP) as HAS_ACCESS_DEP,
+                                                abs(ia.ALLOW_EXT_WDL) as HAS_ACCESS_WD
+
+                                        FROM
+                                                individualaccount ia join share s on (ia.member_nbr=s.member_nbr and ia.account_nbr=s.share_nbr)
+
+                                        WHERE
+                                                ia.individual_id = 372195
+
+                                        UNION
+
+                                        -- ExternalAccess-based loans
+                                        SELECT
+                                                ia.individual_id, ia.member_nbr, ia.account_nbr,
+                                                case when coalesce(ia.ALLOW_EXT_DEP,0) != 0 and coalesce(ia.ALLOW_EXT_WDL,0) != 0 then 3 else 999 end as OWNERSHIP_CATEGORY_ID,
+                                                2 /* loan */ as ACCOUNT_CLASS,
+
+                                                case when coalesce(ia.ALLOW_EXT_DEP,0) != 0 and coalesce(ia.ALLOW_EXT_WDL,0) != 0 then 1 else 0 end as HAS_ACCESS_ALL,
+                                                abs(ia.ALLOW_EXT_DEP) as HAS_ACCESS_DEP,
+                                                abs(ia.ALLOW_EXT_WDL) as HAS_ACCESS_WD
+
+                                        FROM
+                                                individualaccount ia join loan l on (ia.member_nbr=l.member_nbr and ia.account_nbr=l.loan_nbr and coalesce(l.is_written_off,0) = 0)
+
+                                        WHERE
+                                                ia.individual_id = 372195
+
+
+                                    )
+                                    , tempAccountRollup as
+                                    (
+                                        SELECT
+                                                aa.individual_id, aa.member_nbr, member_nbr as OWNER_MEMBER_NBR,  aa.account_nbr,
+                                                max(ownership_category_id) as ownership_category_id, max(ACCOUNT_CLASS) as ACCOUNT_CLASS,
+                                                max(HAS_ACCESS_ALL) as HAS_ACCESS_ALL,
+                                                max(HAS_ACCESS_DEP) as HAS_ACCESS_DEP,
+                                                max(HAS_ACCESS_WD) as HAS_ACCESS_WD
+
+                                        FROM
+                                                allAccounts aa
+
+                                        GROUP BY
+                                                aa.individual_id, aa.member_nbr, aa.account_nbr
+
+                                        ORDER BY
+                                                member_nbr, account_nbr
+                                    )
+
+                                    SELECT DISTINCT
+                                            t.member_nbr, t.account_nbr, t.OWNER_MEMBER_NBR, t.OWNERSHIP_CATEGORY_ID, t.HAS_ACCESS_ALL, t.HAS_ACCESS_DEP, t.HAS_ACCESS_WD
+                                            , omt.TYPE as MEMBERSHIP_TYPE, mp.individual_id as OWNER_INDIVIDUAL_ID, i.d1name as OWNER_NAME, i.first_name as OWNER_FIRST_NAME, i.last_name as OWNER_LAST_NAME, i.individual_type as OWNER_INDIVIDUAL_TYPE
+
+                                           , case
+                                                    when ACCOUNT_CLASS = 3 /* Mortgage */ then 206361
+                                                    else p.product_code
+                                              end as PRODUCT_CODE
+
+                                            , case
+                                                    when ACCOUNT_CLASS = 3 /* Mortgage */ then 'Mortgage'
+                                                    else p.product_name
+                                              end as PRODUCT_NAME
+
+                                            , case
+                                                    when ACCOUNT_CLASS = 1 then s.title
+                                                    when ACCOUNT_CLASS = 2 then ''
+                                                    when ACCOUNT_CLASS = 3 then em.mc_address1 || ' ' || em.mc_city
+
+                                              end as memberDescribedTitle
+                                            , case
+                                                    when s.balance != 0 then s.balance
+                                                    when l.balance != 0 then l.balance
+                                                    when em.mc_prin_bal != 0 then em.mc_prin_bal
+                                                    else 0
+                                            end as balance
+
+                                            , ACCOUNT_CLASS -- , ACCOUNT_TYPE
+                                            , case
+                                                    when ACCOUNT_CLASS = 1 then coalesce(s.closed, 0)
+                                                    when ACCOUNT_CLASS = 2 then coalesce(l.closed, 0)
+                                                   when ACCOUNT_CLASS = 3 and em.mc_ext_drop_date IS NOT NULL then 1
+                                                    when ACCOUNT_CLASS = 3 and em.mc_ext_drop_date IS NULL then 0
+                                                    else 0
+                                            end as CLOSED
+
+                                            , case
+                                                                           when s.LAST_REG_D_UPDATE_DATE >= (CURRENT_DATE - (DAY(CURRENT_DATE)-1)) then coalesce(s.REG_D_CNT,0) -- Expression gets first day of month last reg d transaction occured and if this month show XP value. Else show 0 
+                                                                           else 0
+                                                           end as REG_D_CNT  
+
+                                            , l.limit
+
+                                            , case
+                                                    when ACCOUNT_CLASS = 2 then coalesce(coalesce(l.rate, c.rate), 0)
+                                                    when ACCOUNT_CLASS = 3 then em.mc_int_rate / 10
+                                                    else 0
+                                            end as rate
+
+                                            , case
+                                                    when ACCOUNT_CLASS = 2 then  l.next_due_date
+                                                    when ACCOUNT_CLASS = 3 then  em.mc_next_due_date
+                                                    else '1900-1-1'
+                                            end as NEXT_DUE_DATE
+
+                                            , coalesce((l.limit - l.balance - coalesce(l.SCHEDULED_UPDATE_AUTH_AMT, 0)), 0) as AVAIABLE_CREDIT
+
+                                            , case
+                                                    when ACCOUNT_CLASS = 2 then l.min_pmt
+                                                    else 0
+                                            end as MIN_PMT
+
+                                            , l.int_due
+                                            , (l.DELQ_AMT + l.MIN_PMT_LAST_CYCLE) as calc_required_due
+
+                                            /* Credit Card loans - LOAN.SCHEDULED_PMT is the 'Effective Payment' on XP2 Loan Details; We want the 'Required Payment', which is CREDITCARDLOAN.REQUIRED_PMT */
+                                            , case
+                                                    WHEN ACCOUNT_CLASS = 2 and p.product_class_code = 1 /* Credit Card */ THEN coalesce(cc.REQUIRED_PMT, 0)
+                                                    WHEN ACCOUNT_CLASS = 2 then coalesce(l.scheduled_pmt, 0)
+                                                    WHEN ACCOUNT_CLASS = 3 then (em.mc_pi_pmt_amt + coalesce(em.mc_escrow_pmt_amt,0) + coalesce(mc_late_fees_due_amt, 0))
+                                                    ELSE 0
+                                              END AS scheduled_pmt
+
+
+                                            ,coalesce(l.LAST_STMT_BAL, 0) as EndingStatementBalance
+
+                                            , l.last_cycle_date
+
+                                            , l.title as loanTitle
+                                            , coalesce(pc.prop_value, '0.00') as minToKeepOpen
+                                            , coalesce(s.is_hsa_account, 0) as is_hsa_account
+                                            , coalesce((cc.required_pmt - l.pmt_received_cycle), 0) as delinquentAmount
+
+                                            , case
+                                                when x.xpdbrn IS NOT NULL then cnrcd.cn_bin
+                                                else NULL
+                                              END AS bin
+
+                                            , case
+                                                when x.xpdbrn IS NOT NULL then cast( REPEAT('0',10-LENGTH(ltrim(rtrim(cast(cnrcd.cn_cust as char(10)))))) || cnrcd.cn_cust as char(10))
+                                                else NULL
+                                              END AS customer_number
+
+                                            , cc.card_nbr
+                                            , x.CXEXPDTE as PLASTIC_EXPIRATION_DATE, x.CXLIDATE as PLASTIC_ISSUE_DATE
+                                            , coalesce(dc.conversion_nbr,0) as conversion_nbr
+
+                                            , case
+                                                when x.xpdbrn IS NULL then NULL
+                                                when cnrcd.cn_bin IN (406057, 449036, 402826, 429420, 402825) then
+                                                    cast(cnrcd.CN_BIN as varchar(6)) || right('0000000000' || cast(cnrcd.cn_cust as varchar(10)),10)
+                                                else
+                                                    cast(cnrcd.CN_BIN as varchar(7)) || right('0000000000' || cast(cnrcd.cn_cust as varchar(10)),10)
+                                            end as PLASTIC_CARD_NBR
+
+                                            /* csxname_0 is the cardholder, csxname_1 is the authorized user */
+                                            , ltrim(rtrim(coalesce(x.cxsname_0, ''))) as NAME_ON_CARD
+
+                                            -- mortgage-only fields
+                                            , em.mc_loan_nbr as mortgage_account_nbr
+                                            , em.mc_pi_pmt_amt
+                                            , em.mc_escrow_bal
+                                            , em.mc_late_fees_due_amt
+                                            , em.mc_partial_bal
+                                            , date('1900-01-01') + (65535 - (abs(em.mc_loan_as_of_date * 100)))days as loan_as_of_date
+                                            , em.mc_final_due_date
+                                            , em.mc_loan_term as term_in_months
+                                            , em.mc_loan_date as open_date
+                                            , em.mc_address1
+                                            , em.mc_address2
+                                            , em.mc_city
+                                            , em.mc_state
+                                            , em.mc_zip
+                                            , delq.daysdel, delq.delamt
+
+                                    FROM
+                                            tempAccountRollup t
+                                            left outer join membershipparticipant mp on (mp.member_nbr=t.member_nbr and mp.participation_type=101)
+                                            left outer join individual i on (mp.individual_id=i.individual_id and mp.participation_type = 101)
+                                            left outer join account a on (t.member_nbr=a.member_nbr and t.account_nbr=a.account_Nbr)
+                                            left outer join product p on (p.product_code=a.product_code and p.product_category_code=a.product_category_code and p.product_class_code=a.product_class_code)
+                                            left outer join share s on (t.member_nbr=s.member_nbr and t.account_nbr=s.share_nbr)
+                                            left outer join loan l on (t.member_nbr=l.member_nbr and t.account_nbr=l.loan_nbr)
+                                            left outer join V_PRODUCTCONFIGURATOR_005 pc on (pc.product_item_id=p.product_code and pc.prop_name='MinBalToKeepOpen')
+                                            left outer join creditcardloan cc on (l.member_nbr=cc.member_nbr and l.loan_nbr=cc.loan_nbr)
+                                            left outer join certificate c on (a.member_nbr=c.member_nbr and a.account_nbr=c.share_nbr)
+                                            left outer join cnrcd on (t.member_nbr=cnrcd.cnmemcif and t.account_nbr=cnrcd.cnccd and coalesce(cnrcd.cnblock, '')='' /* non-blocked */)
+                                            left outer join cxrcd x on (x.CX_BIN = cnrcd.CN_BIN and x.CX_CUST = cnrcd.CN_CUST and x.CXEXPDTE >= current date /* non-expired */ and cn_bin IN (406057, 449036, 402826, 429420, 402825, 5812102) /* no old cards */  and x.xpdbrn is not null )
+                                            left outer join draftconversionnbr dc on (dc.member_nbr=t.member_nbr and dc.account_nbr=t.account_nbr)
+                                            left outer join membership omt on (omt.member_nbr=t.OWNER_MEMBER_NBR) /* GET OWNER MEMBERSHIP TYPE */
+                                            left outer join externalmortgagemc em on ( t.member_nbr=em.mc_BORROWER_1_MBR_NBR and t.account_nbr=em.xp_loan_nbr)
+                                            left outer join DCU.CPLNDELQ delq on (delq.member_nbr=t.member_nbr and delq.loan_nbr=t.account_nbr)
+
+                                    WHERE
+                                        not (HAS_ACCESS_ALL = 0 and HAS_ACCESS_DEP = 0 and HAS_ACCESS_WD = 0) /* exclude individuals without any access */
+
+                                    ORDER BY
+                                            t.member_nbr, t.account_nbr

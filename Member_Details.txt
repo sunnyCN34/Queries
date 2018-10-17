@@ -1,0 +1,23 @@
+select i.INDIVIDUAL_ID
+, i.BIRTH_DATE
+, s.MEMBER_NBR
+, s.SHARE_NBR
+, s.BALANCE
+, i.DIR_DEP_LAST_ACTIVITY_DT,
+s.closed
+from INDIVIDUAL i
+inner join MEMBERSHIPPARTICIPANT mp 
+                on mp.INDIVIDUAL_ID=i.INDIVIDUAL_ID
+                and mp.PARTICIPATION_TYPE=101
+inner join SHARE s 
+                on mp.member_nbr=s.member_nbr       
+                and SHARE_TYPE = 1
+                and balance < 1000
+where s.MEMBER_NBR = 5174440
+order by i.INDIVIDUAL_ID, s.MEMBER_NBR, s.SHARE_NBR
+
+
+select  mp.member_nbr, mp.INDIVIDUAL_ID, i.FIRST_NAME from SHARE s inner join MEMBERSHIPPARTICIPANT mp on s.member_nbr=mp.member_nbr  inner join  INDIVIDUAL i on  mp.INDIVIDUAL_ID=i.INDIVIDUAL_ID and i.FIRST_NAME= 'RAVI' and i.LAST_NAME='OLI';
+
+
+
