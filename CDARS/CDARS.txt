@@ -1,0 +1,22 @@
+select  p.PRODUCT_NAME, p.PRODUCT_DESC, s.MEMBER_NBR, s.SHARE_NBR from share s inner join ACCOUNT a on s.MEMBER_NBR = a.MEMBER_NBR and s.SHARE_NBR = a.ACCOUNT_NBR inner join PRODUCT p on a.PRODUCT_CATEGORY_CODE = p.PRODUCT_CATEGORY_CODE and a.PRODUCT_CODE =p.PRODUCT_CODE
+    and a.PRODUCT_CLASS_CODE = p.PRODUCT_CLASS_CODE  where s.OPEN_BY_OPR_NBR =6019 and s.SHARE_TYPE= 52 
+     and s.OPEN_DATE = '2018-10-16 08:09:18.010' and p.PRODUCT_CATEGORY_CODE =1 and p.PRODUCT_CLASS_CODE =2 and p.PRODUCT_CODE in (221113,221120,221127,221135,221142,221149) and s.BALANCE =0
+
+
+                            select s.MEMBER_NBR,s.SHARE_NBR,s.SHARE_TYPE,s.BALANCE,s.HAS_STOPS,s.SPECIAL_HOLD_AMT,s.SPECIAL_HOLD_CODE  from share s
+                            where s.MEMBER_NBR='6056791';
+                            
+
+                            update share set SPECIAL_HOLD_CODE= NULL, SPECIAL_HOLD_AMT= '0.00' where MEMBER_NBR='6056791' and SHARE_NBR=1; 
+                            
+
+
+                            select s.SHARE_NBR, s.MEMBER_NBR, s.SPECIAL_HOLD_AMT, s.SPECIAL_HOLD_CODE from share s  inner join account a on s.SHARE_NBR = a.ACCOUNT_NBR where  s.SPECIAL_HOLD_CODE='HY' ;
+
+                            select s.SHARE_NBR, s.MEMBER_NBR, s.SPECIAL_HOLD_AMT, s.SPECIAL_HOLD_CODE from share s where SPECIAL_HOLD_CODE='HY';
+
+
+                            
+
+
+                           
