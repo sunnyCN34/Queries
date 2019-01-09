@@ -17,6 +17,7 @@ select  p.PRODUCT_NAME, p.PRODUCT_DESC, s.MEMBER_NBR, s.SHARE_NBR from share s i
 
 
                             
-
+  select  s.MEMBER_NBR,s.SHARE_NBR,s.SHARE_TYPE,s.BALANCE,s.HAS_STOPS,s.SPECIAL_HOLD_AMT,s.OPEN_DATE,s.SPECIAL_HOLD_CODE  from share s
+                            where s.MEMBER_NBR='5883618';
 
                            
