@@ -1,0 +1,3 @@
+select INDIVIDUAL_ID from membershipparticipant where MEMBER_NBR='2357955';
+
+select MEMBER_NBR from membershipparticipant where INDIVIDUAL_ID= 6091704 ;
